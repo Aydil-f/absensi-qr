@@ -3,108 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi Digital SDN Kampung Besar 3</title>
+    <title>Absensi Masuk/Pulang</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #008080; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 0; }
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
-        #reader { border-radius: 10px; overflow: hidden; margin-bottom: 15px; }
-        #statusMsg { padding: 12px; border-radius: 8px; margin-top: 10px; display: none; font-weight: bold; }
-        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; font-size: 14px; }
-        th { background: #eee; padding: 12px; text-align: left; }
-        td { padding: 12px; border-top: 1px solid #eee; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; background: #28a745; color: white; }
+        :root { --primary: #008080; --secondary: #6c757d; }
+        body { font-family: sans-serif; background: #f4f7f6; margin: 0; text-align: center; }
+        .header { background: var(--primary); color: white; padding: 20px; }
+        .container { padding: 15px; max-width: 500px; margin: auto; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        button { flex: 1; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-masuk { background: #28a745; color: white; opacity: 0.5; }
+        .btn-pulang { background: #dc3545; color: white; opacity: 0.5; }
+        .active { opacity: 1; transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 2px solid black; }
+        #reader { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        #status { padding: 15px; border-radius: 8px; display: none; margin-bottom: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h3 style="margin:0">PRESENSI SDN KAMBES 3</h3>
-</div>
+<div class="header"><h3>PRESENSI DIGITAL</h3></div>
 
 <div class="container">
-    <div class="card">
-        <div id="reader"></div>
-        <div id="statusMsg"></div>
+    <p>Pilih Tipe Absen Dahulu:</p>
+    <div class="btn-group">
+        <button id="btnMasuk" class="btn-masuk" onclick="setTipe('MASUK')">MASUK</button>
+        <button id="btnPulang" class="btn-pulang" onclick="setTipe('PULANG')">PULANG</button>
     </div>
 
-    <div style="overflow-x:auto">
-        <table>
-            <thead>
-                <tr>
-                    <th>Waktu</th>
-                    <th>ID User</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="historyBody">
-                </tbody>
-        </table>
-    </div>
+    <div id="reader"></div>
+    <div id="status"></div>
 </div>
 
 <script>
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbwzfFIoyldPeAShH53UVMI8NtEKLgI120y7jAi9ceaxvBVanqOT2V_H08VsGsHOwIsy/exec";
-    let isScanning = false; // Variabel pengunci
+    const webAppUrl = "URL_WEB_APP_ANDA";
+    let tipeAbsen = ""; 
+    let isProcessing = false;
+
+    function setTipe(tipe) {
+        tipeAbsen = tipe;
+        document.getElementById('btnMasuk').classList.remove('active');
+        document.getElementById('btnPulang').classList.remove('active');
+        
+        if(tipe === 'MASUK') document.getElementById('btnMasuk').classList.add('active');
+        if(tipe === 'PULANG') document.getElementById('btnPulang').classList.add('active');
+    }
 
     function onScanSuccess(decodedText) {
-        // 1. CEK APAKAH SEDANG DALAM PROSES DELAY
-        if (isScanning) return; 
+        if (isProcessing) return;
+        if (tipeAbsen === "") {
+            alert("PILIH TIPE ABSEN (MASUK/PULANG) DAHULU!");
+            return;
+        }
 
-        // 2. AKTIFKAN PENGUNCI
-        isScanning = true;
+        isProcessing = true;
+        const statusDiv = document.getElementById('status');
+        statusDiv.style.display = "block";
+        statusDiv.style.background = "#eee";
+        statusDiv.innerText = `Memproses ${tipeAbsen}...`;
 
-        const statusDiv = document.getElementById('statusMsg');
-        statusDiv.style.display = 'block';
-        statusDiv.className = 'alert alert-warning'; // Warna kuning (proses)
-        statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses ${decodedText}...`;
-
-        // 3. KIRIM DATA KE GOOGLE SHEETS
         fetch(webAppUrl, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify({
                 id_user: decodedText,
-                id_device: "Mobile_Scanner"
+                tipe: tipeAbsen,
+                id_device: navigator.userAgent
             })
         })
         .then(() => {
-            statusDiv.className = 'success';
-            statusDiv.innerText = "BERHASIL: " + decodedText;
-            
-            // Tambahkan ke tabel riwayat
-            const row = `<tr>
-                <td>${new Date().toLocaleTimeString()}</td>
-                <td>${decodedText}</td>
-                <td><span class="badge">Hadir</span></td>
-            </tr>`;
-            document.getElementById('historyBody').innerHTML = row + document.getElementById('historyBody').innerHTML;
-            
-            // 4. JEDA VISUAL (DELAY 3 DETIK)
-            // Selama 3 detik ini, scanner tidak akan memproses QR apa pun
-            setTimeout(() => {
-                statusDiv.style.display = 'none';
-                isScanning = false; // BUKA PENGUNCI
-                console.log("Scanner siap kembali");
-            }, 3000); 
+            statusDiv.style.background = tipeAbsen === 'MASUK' ? "#d4edda" : "#f8d7da";
+            statusDiv.innerText = `BERHASIL ${tipeAbsen}: ${decodedText}`;
+            setTimeout(() => { 
+                statusDiv.style.display = "none";
+                isProcessing = false; 
+            }, 3000);
         })
         .catch(err => {
-            statusDiv.className = 'error';
-            statusDiv.innerText = "GAGAL: Hubungi Admin";
-            isScanning = false; // Buka kunci jika gagal agar bisa coba lagi
+            alert("Error: " + err);
+            isProcessing = false;
         });
     }
 
-    var html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-        fps: 10, 
-        qrbox: {width: 250, height: 250},
-        aspectRatio: 1.0 
-    });
+    var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
     html5QrcodeScanner.render(onScanSuccess);
 </script>
 
