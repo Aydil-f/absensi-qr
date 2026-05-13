@@ -49,16 +49,22 @@
 </div>
 
 <script>
-    // MASUKKAN URL GOOGLE SCRIPT ANDA DI SINI
     const webAppUrl = "https://script.google.com/macros/s/AKfycbwzfFIoyldPeAShH53UVMI8NtEKLgI120y7jAi9ceaxvBVanqOT2V_H08VsGsHOwIsy/exec";
+    let isScanning = false; // Variabel pengunci
 
     function onScanSuccess(decodedText) {
+        // 1. CEK APAKAH SEDANG DALAM PROSES DELAY
+        if (isScanning) return; 
+
+        // 2. AKTIFKAN PENGUNCI
+        isScanning = true;
+
         const statusDiv = document.getElementById('statusMsg');
         statusDiv.style.display = 'block';
-        statusDiv.className = '';
-        statusDiv.style.background = '#e2e3e5';
-        statusDiv.innerText = "Memproses: " + decodedText;
+        statusDiv.className = 'alert alert-warning'; // Warna kuning (proses)
+        statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses ${decodedText}...`;
 
+        // 3. KIRIM DATA KE GOOGLE SHEETS
         fetch(webAppUrl, {
             method: 'POST',
             mode: 'no-cors',
@@ -71,7 +77,7 @@
             statusDiv.className = 'success';
             statusDiv.innerText = "BERHASIL: " + decodedText;
             
-            // Tambah ke tabel riwayat
+            // Tambahkan ke tabel riwayat
             const row = `<tr>
                 <td>${new Date().toLocaleTimeString()}</td>
                 <td>${decodedText}</td>
@@ -79,16 +85,21 @@
             </tr>`;
             document.getElementById('historyBody').innerHTML = row + document.getElementById('historyBody').innerHTML;
             
-            // Sembunyikan status setelah 3 detik
-            setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+            // 4. JEDA VISUAL (DELAY 3 DETIK)
+            // Selama 3 detik ini, scanner tidak akan memproses QR apa pun
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+                isScanning = false; // BUKA PENGUNCI
+                console.log("Scanner siap kembali");
+            }, 3000); 
         })
         .catch(err => {
             statusDiv.className = 'error';
-            statusDiv.innerText = "GAGAL: Server tidak merespon";
+            statusDiv.innerText = "GAGAL: Hubungi Admin";
+            isScanning = false; // Buka kunci jika gagal agar bisa coba lagi
         });
     }
 
-    // Setelan scanner agar lebih stabil di HP
     var html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
         fps: 10, 
         qrbox: {width: 250, height: 250},
