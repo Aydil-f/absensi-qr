@@ -3,142 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi QR - SDN KAMBES 3</title>
+    <title>Absensi - SDN KAMBES 3</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #020617;
-            --primary-neon: #3b82f6;
-            --secondary-neon: #06b6d4;
-            --glass: rgba(15, 23, 42, 0.8);
-            --border-glow: rgba(59, 130, 246, 0.3);
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --bg-dark: #030712;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
-            background: var(--bg-deep);
+            background-color: var(--bg-dark);
             background-image: 
-                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 40%);
-            margin: 0; min-height: 100vh; color: white;
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            margin: 0; min-height: 100vh; color: #f8fafc;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Dekorasi Garis Partikel (Web3 Look) */
-        body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-            opacity: 0.1; z-index: -1;
+        .header { 
+            padding: 60px 20px 40px 20px; text-align: center;
         }
-
-        .header { padding: 50px 20px 30px; text-align: center; }
-        .header h1 { 
-            font-size: 2.8rem; font-weight: 800; line-height: 1.1; margin: 0;
-            background: linear-gradient(to bottom, #ffffff 50%, #94a3b8);
+        .header h2 { 
+            margin: 0; font-weight: 800; font-size: 2rem; letter-spacing: -1.5px;
+            background: linear-gradient(to right, #818cf8, #c084fc);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .header span { color: var(--secondary-neon); text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; font-weight: 700; }
+        .header p { opacity: 0.5; font-size: 0.85rem; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; }
 
-        .container { width: 90%; max-width: 450px; }
+        .container { 
+            width: 90%; max-width: 420px; z-index: 10;
+        }
 
-        .main-card {
+        .glass-card {
             background: var(--glass);
-            backdrop-filter: blur(25px);
-            border: 1px solid var(--border-glow);
-            border-radius: 28px;
-            padding: 30px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(59, 130, 246, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Toggle Button Custom */
-        .mode-selector {
-            display: flex; background: rgba(0,0,0,0.4); border-radius: 16px;
-            padding: 6px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05);
+        .mode-container {
+            display: flex; gap: 10px; margin-bottom: 24px;
+            background: rgba(0,0,0,0.3); padding: 5px; border-radius: 20px;
         }
+
         .mode-btn {
-            flex: 1; padding: 12px; border: none; border-radius: 12px;
-            background: transparent; color: #64748b; font-weight: 700;
-            cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1; padding: 12px; border: none; border-radius: 16px;
+            font-weight: 700; cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent; color: #94a3b8; font-size: 12px;
         }
-        .mode-btn.active-m { background: #2563eb; color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); }
-        .mode-btn.active-p { background: #1e293b; color: white; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* Scanner Styling */
+        .mode-btn.active-m { background: var(--primary); color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+        .mode-btn.active-p { background: var(--danger); color: white; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+
         #reader { 
-            width: 100%; border-radius: 20px; overflow: hidden; 
-            border: 1px solid rgba(59, 130, 246, 0.2) !important;
-        }
-        #reader__scan_region { background: #000; }
-
-        /* Status Label Terverifikasi */
-        .status-box {
-            display: none; margin-top: 25px; padding: 20px; border-radius: 20px;
-            background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);
-            animation: fadeIn 0.5s ease;
-        }
-        .status-content { display: flex; align-items: center; gap: 15px; }
-        .circle-check { 
-            width: 40px; height: 40px; background: #10b981; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 20px;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-        }
-        .status-text h4 { margin: 0; color: #34d399; font-size: 14px; }
-        .status-text p { margin: 2px 0 0; color: #94a3b8; font-size: 11px; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Log Section */
-        .log-section { margin-top: 40px; width: 100%; padding-bottom: 50px; }
-        .log-title { font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
-        .log-item {
-            background: rgba(255,255,255,0.02); padding: 15px 20px; border-radius: 18px;
-            border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 12px;
+            width: 100%; border-radius: 24px; overflow: hidden; 
+            border: 1px solid var(--glass-border) !important;
         }
 
+        .status-toast {
+            display: none; padding: 16px; border-radius: 20px; 
+            margin-top: 20px; font-weight: 700; font-size: 13px;
+            text-align: center; animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .history-section { margin-top: 40px; width: 100%; }
+        .history-title { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 16px; letter-spacing: 2px; }
+
+        .log-card {
+            background: rgba(255,255,255,0.02); padding: 18px; border-radius: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; border: 1px solid var(--glass-border);
+            transition: 0.3s;
+        }
+        .log-card:hover { transform: scale(1.02); background: rgba(255,255,255,0.05); }
+        
         #reader__dashboard_section_csr button {
-            background: #2563eb !important; border: none !important; border-radius: 10px !important;
-            padding: 10px 20px !important; color: white !important; font-weight: 700 !important;
+            background: var(--primary) !important; color: white !important; 
+            border: none !important; padding: 12px 24px !important; 
+            border-radius: 14px !important; font-weight: 700 !important;
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <span>SDN Kampung Besar III</span>
-    <h1>Absen Digital <br>Untuk <span style="-webkit-text-fill-color: var(--secondary-neon);">SDN Kampung Besar III</span></h1>
+    <h2>SDN KAMPUNG BESAR III</h2>
+    <p>Silahkan Scan Kartu QR Anda</p>
 </div>
 
 <div class="container">
-    <div class="main-card">
-        <div class="mode-selector">
-            <button id="mBtn" class="mode-btn" onclick="setMode('MASUK')">MASUK</button>
-            <button id="pBtn" class="mode-btn" onclick="setMode('PULANG')">PULANG</button>
+    <div class="glass-card">
+        <div class="mode-container">
+            <button id="mBtn" class="mode-btn" onclick="setMode('MASUK')">CHECK-IN</button>
+            <button id="pBtn" class="mode-btn" onclick="setMode('PULANG')">CHECK-OUT</button>
         </div>
-
+        
         <div id="reader"></div>
-
-        <div id="statusBox" class="status-box">
-            <div class="status-content">
-                <div class="circle-check">✓</div>
-                <div class="status-text">
-                    <h4>Lokasi Terverifikasi</h4>
-                    <p id="statusMsg">Confirmed: User ID Verified</p>
-                </div>
-            </div>
-        </div>
+        <div id="status" class="status-toast"></div>
     </div>
 
-    <div class="log-section">
-        <div class="log-title">On-Chain Activity (Log Harian)</div>
+    <div class="history-section">
+        <span class="history-title">History Absen</span>
         <div id="logList"></div>
     </div>
 </div>
 
 <script>
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbypNOLWfeCeYlLeKh8a2wbi9Q0G7-vSxcJXO3RP5eTzBBsGr0bXuC380Vnj_oE0bjQ/exec"; // GANTI INI
+    // URL Deployment terakhir Anda
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbypNOLWfeCeYlLeKh8a2wbi9Q0G7-vSxcJXO3RP5eTzBBsGr0bXuC380Vnj_oE0bjQ/exec"; 
     let currentMode = "";
     let isProcessing = false;
 
@@ -151,52 +136,68 @@
     }
 
     function onScanSuccess(decodedText) {
-        if (isProcessing || !currentMode) return;
-        
+        if (isProcessing) return;
+        if (!currentMode) {
+            alert("Pilih Mode Dulu!");
+            return;
+        }
+
         isProcessing = true;
-        const box = document.getElementById('statusBox');
-        const msg = document.getElementById('statusMsg');
-        
-        box.style.display = "block";
-        box.style.borderColor = "rgba(59, 130, 246, 0.3)";
-        msg.innerText = "Processing Transaction...";
+        const status = document.getElementById('status');
+        status.style.display = "block";
+        status.style.background = "rgba(99, 102, 241, 0.1)";
+        status.style.color = "#818cf8";
+        status.innerText = "Broadcasting to Node...";
 
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const lat = pos.coords.latitude;
-                const long = pos.coords.longitude;
-                
-                fetch(`${webAppUrl}?id_user=${encodeURIComponent(decodedText)}&tipe=${currentMode}&lat=${lat}&long=${long}`)
-                .then(() => {
-                    box.style.background = "rgba(16, 185, 129, 0.05)";
-                    box.style.borderColor = "rgba(16, 185, 129, 0.2)";
-                    msg.innerText = `Confirmed: ${decodedText} Success.`;
-                    updateLog(decodedText, currentMode);
-                    setTimeout(() => { box.style.display = "none"; isProcessing = false; }, 4000);
-                });
-            }, () => {
-                alert("GPS Harus Aktif!");
-                isProcessing = false;
-            });
+            navigator.geolocation.getCurrentPosition(
+                (pos) => kirimData(decodedText, currentMode, pos.coords.latitude, pos.coords.longitude),
+                () => {
+                    alert("GPS Wajib Aktif!");
+                    isProcessing = false;
+                    status.style.display = "none";
+                },
+                { enableHighAccuracy: true }
+            );
         }
+    }
+
+    function kirimData(id, tipe, lat, long) {
+        const status = document.getElementById('status');
+        const finalUrl = `${webAppUrl}?id_user=${encodeURIComponent(id)}&tipe=${encodeURIComponent(tipe)}&lat=${lat}&long=${long}`;
+
+        fetch(finalUrl, { method: 'GET' })
+        .then(() => {
+            status.style.background = "rgba(34, 197, 94, 0.1)";
+            status.style.color = "#4ade80";
+            status.innerText = `Verified: ${id}`;
+            updateLog(id, currentMode);
+            setTimeout(() => { status.style.display = "none"; isProcessing = false; }, 3000);
+        })
+        .catch(() => {
+            status.innerText = "Network Error!";
+            isProcessing = false;
+        });
     }
 
     function updateLog(id, mode) {
         const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const item = `
-            <div class="log-item">
+        const color = mode === 'MASUK' ? '#4ade80' : '#f87171';
+        const log = `
+            <div class="log-card">
                 <div>
-                    <div style="font-weight:800; font-size:14px;">${id}</div>
-                    <div style="font-size:10px; color:#64748b;">${now} • Timestamp Confirmed</div>
+                    <div style="font-weight:800; font-size:14px; color:#f1f5f9">${id}</div>
+                    <div style="font-size:10px; color:#64748b; letter-spacing:1px">${now}</div>
                 </div>
-                <div style="font-weight:800; color: ${mode === 'MASUK' ? '#34d399' : '#f87171'}">${mode}</div>
+                <div style="font-weight:800; font-size:12px; color:${color}">${mode}</div>
             </div>`;
-        document.getElementById('logList').innerHTML = item + document.getElementById('logList').innerHTML;
+        document.getElementById('logList').innerHTML = log + document.getElementById('logList').innerHTML;
     }
 
-    const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
-    scanner.render(onScanSuccess);
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+        fps: 25, qrbox: {width: 220, height: 220}, aspectRatio: 1.0 
+    });
+    html5QrcodeScanner.render(onScanSuccess);
 </script>
-
 </body>
 </html>
