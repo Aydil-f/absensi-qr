@@ -3,88 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi Masuk/Pulang</title>
+    <title>Absensi SDN KAMBES 3</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #008080; --secondary: #6c757d; }
-        body { font-family: sans-serif; background: #f4f7f6; margin: 0; text-align: center; }
-        .header { background: var(--primary); color: white; padding: 20px; }
-        .container { padding: 15px; max-width: 500px; margin: auto; }
-        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        button { flex: 1; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-masuk { background: #28a745; color: white; opacity: 0.5; }
-        .btn-pulang { background: #dc3545; color: white; opacity: 0.5; }
-        .active { opacity: 1; transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 2px solid black; }
-        #reader { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-        #status { padding: 15px; border-radius: 8px; display: none; margin-bottom: 20px; font-weight: bold; }
+        :root { --primary: #008080; --masuk: #2ecc71; --pulang: #e74c3c; --bg: #f8f9fa; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        .header { background: linear-gradient(135deg, var(--primary), #005a5a); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .header h2 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
+
+        .container { padding: 20px; flex: 1; max-width: 500px; margin: -40px auto 0 auto; width: 100%; }
+        
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }
+        
+        .mode-selector { display: flex; gap: 15px; margin-bottom: 25px; }
+        .mode-btn { flex: 1; padding: 18px; border: none; border-radius: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #fff; background: #bdc3c7; text-transform: uppercase; }
+        
+        .btn-masuk.active { background: var(--masuk); transform: translateY(-3px); box-shadow: 0 8px 15px rgba(46, 204, 113, 0.3); }
+        .btn-pulang.active { background: var(--pulang); transform: translateY(-3px); box-shadow: 0 8px 15px rgba(231, 76, 60, 0.3); }
+
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; border: none !important; }
+        #reader__dashboard_section_csr button { background: var(--primary); color: white; border-radius: 8px; padding: 10px; border: none; margin-top: 10px; }
+
+        .status-pill { display: none; padding: 15px; border-radius: 12px; margin-top: 15px; font-weight: 600; font-size: 14px; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .history-label { font-weight: 700; color: #7f8c8d; margin-bottom: 10px; display: block; font-size: 12px; text-transform: uppercase; }
+        .log-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border-left: 5px solid var(--primary); }
     </style>
 </head>
 <body>
 
-<div class="header"><h3>ABSENSI QR SDN KAMBES 3</h3></div>
+<div class="header">
+    <h2>ABSENSI QR SDN KAMBES 3</h2>
+</div>
 
 <div class="container">
-    <p>Pilih Tipe Absen Dahulu:</p>
-    <div class="btn-group">
-        <button id="btnMasuk" class="btn-masuk" onclick="setTipe('MASUK')">MASUK</button>
-        <button id="btnPulang" class="btn-pulang" onclick="setTipe('PULANG')">PULANG</button>
+    <div class="card">
+        <span class="history-label text-center">Pilih Status Presensi</span>
+        <div class="mode-selector">
+            <button id="btnM" class="mode-btn btn-masuk" onclick="setMode('MASUK')">MASUK</button>
+            <button id="btnP" class="mode-btn btn-pulang" onclick="setMode('PULANG')">PULANG</button>
+        </div>
+        
+        <div id="reader"></div>
+        <div id="status" class="status-pill"></div>
     </div>
 
-    <div id="reader"></div>
-    <div id="status"></div>
+    <span class="history-label">Riwayat Terakhir</span>
+    <div id="logList"></div>
 </div>
 
 <script>
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbz0n0DAbO0QywXKT7i9ZYfshVLz9nm086LqHSaM0ZlhZrTBZd1MNimSGCGVGkJctUiY/exec";
-    let tipeAbsen = ""; 
-    let isProcessing = false;
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbz0n0DAbO0QywXKT7i9ZYfshVLz9nm086LqHSaM0ZlhZrTBZd1MNimSGCGVGkJctUiY/exec"; // GANTI DENGAN URL EXEC ANDA
+    let currentMode = "";
+    let isLocked = false;
 
-    function setTipe(tipe) {
-        tipeAbsen = tipe;
-        document.getElementById('btnMasuk').classList.remove('active');
-        document.getElementById('btnPulang').classList.remove('active');
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('btnM').classList.remove('active');
+        document.getElementById('btnP').classList.remove('active');
         
-        if(tipe === 'MASUK') document.getElementById('btnMasuk').classList.add('active');
-        if(tipe === 'PULANG') document.getElementById('btnPulang').classList.add('active');
+        if(mode === 'MASUK') document.getElementById('btnM').classList.add('active');
+        else document.getElementById('btnP').classList.add('active');
     }
 
     function onScanSuccess(decodedText) {
-        if (isProcessing) return;
-        if (tipeAbsen === "") {
-            alert("PILIH TIPE ABSEN (MASUK/PULANG) DAHULU!");
+        if (isLocked) return;
+        if (!currentMode) {
+            alert("Harap pilih mode MASUK atau PULANG!");
             return;
         }
 
-        isProcessing = true;
+        isLocked = true;
         const statusDiv = document.getElementById('status');
         statusDiv.style.display = "block";
-        statusDiv.style.background = "#eee";
-        statusDiv.innerText = `Memproses ${tipeAbsen}...`;
+        statusDiv.style.background = "#ebf5fb";
+        statusDiv.style.color = "#2980b9";
+        statusDiv.innerHTML = "⌛ Mengirim Data...";
 
         fetch(webAppUrl, {
             method: 'POST',
             mode: 'no-cors',
-            body: JSON.stringify({
-                id_user: decodedText,
-                tipe: tipeAbsen,
-                id_device: navigator.userAgent
-            })
+            body: JSON.stringify({ id_user: decodedText, tipe: currentMode })
         })
         .then(() => {
-            statusDiv.style.background = tipeAbsen === 'MASUK' ? "#d4edda" : "#f8d7da";
-            statusDiv.innerText = `BERHASIL ${tipeAbsen}: ${decodedText}`;
+            statusDiv.style.background = currentMode === 'MASUK' ? "#d4edda" : "#f8d7da";
+            statusDiv.style.color = currentMode === 'MASUK' ? "#155724" : "#721c24";
+            statusDiv.innerHTML = `✅ Berhasil ${currentMode}: ${decodedText}`;
+            
+            addLog(decodedText, currentMode);
+            
             setTimeout(() => { 
                 statusDiv.style.display = "none";
-                isProcessing = false; 
+                isLocked = false; 
             }, 3000);
         })
-        .catch(err => {
-            alert("Error: " + err);
-            isProcessing = false;
+        .catch(() => {
+            statusDiv.style.background = "#f2dede";
+            statusDiv.innerText = "❌ Gagal Terhubung Server";
+            isLocked = false;
         });
     }
 
-    var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    function addLog(id, mode) {
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const logHtml = `
+            <div class="log-item" style="border-left-color: ${mode === 'MASUK' ? '#2ecc71' : '#e74c3c'}">
+                <div>
+                    <div style="font-weight:700">${id}</div>
+                    <div style="font-size:11px; color:#95a5a6">${time}</div>
+                </div>
+                <div style="font-weight:700; color:${mode === 'MASUK' ? '#2ecc71' : '#e74c3c'}">${mode}</div>
+            </div>`;
+        document.getElementById('logList').innerHTML = logHtml + document.getElementById('logList').innerHTML;
+    }
+
+    // Auto Start Scanner
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+        fps: 15, 
+        qrbox: {width: 250, height: 250},
+        rememberLastUsedCamera: true
+    });
     html5QrcodeScanner.render(onScanSuccess);
 </script>
 
