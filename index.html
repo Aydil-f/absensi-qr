@@ -3,148 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi QR - SDN KAMBES 3</title>
+    <title>Absensi - SDN KAMBES 3</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Perubahan palet warna ke Deep Dark Blue */
-            --bg-deep: #020817; /* Navy super gelap */
-            --bg-surface: #0f172a; /* Navy untuk kartu */
-            --primary-neon: #3b82f6; 
-            --secondary-neon: #38bdf8;
-            --glass: rgba(15, 23, 42, 0.9); /* Lebih pekat agar mewah */
-            --border-glow: rgba(59, 130, 246, 0.2);
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --bg-dark: #030712;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body { 
-            background: var(--bg-deep);
-            /* Gradien biru tua yang lebih elegan */
+            background-color: var(--bg-dark);
             background-image: 
-                radial-gradient(circle at 0% 0%, rgba(30, 58, 138, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(15, 23, 42, 0.5) 0%, transparent 50%);
-            margin: 0; min-height: 100vh; color: white;
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            margin: 0; min-height: 100vh; color: #f8fafc;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Dekorasi partikel yang lebih subtle */
-        body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-            opacity: 0.03; z-index: -1;
-        }
-
         .header { 
-            padding: 45px 20px 30px; 
-            text-align: center; 
+            padding: 60px 20px 40px 20px; text-align: center;
+        }
+        .header h2 { 
+            margin: 0; font-weight: 700; font-size: 1.4rem; letter-spacing: -1.5px;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .header h3 { 
+            margin: 0; font-weight: 720; font-size: 1.5rem; letter-spacing: -1.5px;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .header p { opacity: 0.5; font-size: 0.85rem; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; }
+
+        .container { 
+            width: 90%; max-width: 420px; z-index: 10;
         }
 
-        .header h1 { 
-            font-size: 1.4rem;
-            font-weight: 800; 
-            margin: 0;
-            letter-spacing: 1.5px;
-            /* Gradien teks putih ke perak */
-            background: linear-gradient(to bottom, #ffffff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header p { 
-            color: var(--secondary-neon); 
-            text-transform: uppercase; 
-            letter-spacing: 2px; 
-            font-size: 0.65rem; 
-            font-weight: 700; 
-            margin-top: 10px;
-            opacity: 0.9;
-        }
-
-        .container { width: 92%; max-width: 400px; }
-
-        .main-card {
+        .glass-card {
             background: var(--glass);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 28px;
-            padding: 26px;
-            /* Shadow yang lebih dalam */
-            box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .mode-selector {
-            display: flex; background: rgba(2, 6, 23, 0.6); border-radius: 16px;
-            padding: 5px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.03);
+        .mode-container {
+            display: flex; gap: 10px; margin-bottom: 24px;
+            background: rgba(0,0,0,0.3); padding: 5px; border-radius: 20px;
         }
 
         .mode-btn {
-            flex: 1; padding: 12px; border: none; border-radius: 12px;
-            background: transparent; color: #94a3b8; font-weight: 700; font-size: 11px;
-            cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1; padding: 12px; border: none; border-radius: 16px;
+            font-weight: 700; cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent; color: #94a3b8; font-size: 12px;
         }
 
-        .mode-btn.active-m { background: #1d4ed8; color: white; box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4); }
-        .mode-btn.active-p { background: #1e293b; color: white; border: 1px solid rgba(255,255,255,0.05); }
+        .mode-btn.active-m { background: var(--primary); color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+        .mode-btn.active-p { background: var(--danger); color: white; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
 
         #reader { 
-            width: 100%; border-radius: 20px; overflow: hidden; 
-            border: 1px solid rgba(59, 130, 246, 0.1) !important;
-            background: black;
+            width: 100%; border-radius: 24px; overflow: hidden; 
+            border: 1px solid var(--glass-border) !important;
         }
 
-        .status-box {
-            display: none; margin-top: 25px; padding: 18px; border-radius: 20px;
-            background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2);
+        .status-toast {
+            display: none; padding: 16px; border-radius: 20px; 
+            margin-top: 20px; font-weight: 700; font-size: 13px;
+            text-align: center; animation: slideUp 0.3s ease-out;
         }
 
-        .log-section { margin-top: 40px; width: 100%; padding-bottom: 50px; }
-        .log-title { font-size: 10px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
-        .log-item {
-            background: rgba(15, 23, 42, 0.4); padding: 14px 20px; border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 12px;
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .history-section { margin-top: 40px; width: 100%; }
+        .history-title { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 16px; letter-spacing: 2px; }
+
+        .log-card {
+            background: rgba(255,255,255,0.02); padding: 18px; border-radius: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; border: 1px solid var(--glass-border);
             transition: 0.3s;
         }
-        .log-item:hover { background: rgba(15, 23, 42, 0.6); border-color: rgba(59, 130, 246, 0.2); }
-
+        .log-card:hover { transform: scale(1.02); background: rgba(255,255,255,0.05); }
+        
         #reader__dashboard_section_csr button {
-            background: #2563eb !important; border: none !important; border-radius: 12px !important;
-            padding: 10px 20px !important; color: white !important; font-size: 12px !important;
-            font-weight: 700 !important;
+            background: var(--primary) !important; color: white !important; 
+            border: none !important; padding: 12px 24px !important; 
+            border-radius: 14px !important; font-weight: 700 !important;
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>SDN KAMPUNG BESAR III</h1>
+    <h2>ABSEN DIGITAL</h2>
+    <h3>SDN KAMPUNG BESAR III</h3>
     <p>Silahkan Scan Kartu QR Anda</p>
 </div>
 
 <div class="container">
-    <div class="main-card">
-        <div class="mode-selector">
+    <div class="glass-card">
+        <div class="mode-container">
             <button id="mBtn" class="mode-btn" onclick="setMode('MASUK')">MASUK</button>
             <button id="pBtn" class="mode-btn" onclick="setMode('PULANG')">PULANG</button>
         </div>
-
+        
         <div id="reader"></div>
-
-        <div id="statusBox" class="status-box">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 32px; height: 32px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);">✓</div>
-                <div>
-                    <h4 style="margin: 0; color: #34d399; font-size: 13px;">Berhasil</h4>
-                    <p id="statusMsg" style="margin: 2px 0 0; color: #94a3b8; font-size: 10px;">Data Terverifikasi</p>
-                </div>
-            </div>
-        </div>
+        <div id="status" class="status-toast"></div>
     </div>
 
-    <div class="log-section">
-        <div class="log-title">History Absen</div>
+    <div class="history-section">
+        <span class="history-title">History Absen</span>
         <div id="logList"></div>
     </div>
 </div>
@@ -163,42 +141,68 @@
     }
 
     function onScanSuccess(decodedText) {
-        if (isProcessing || !currentMode) return;
-        isProcessing = true;
-        
-        const box = document.getElementById('statusBox');
-        const msg = document.getElementById('statusMsg');
-        box.style.display = "block";
-        msg.innerText = "Mengirim data...";
+        if (isProcessing) return;
+        if (!currentMode) {
+            alert("Pilih Mode Dulu!");
+            return;
+        }
 
-        navigator.geolocation.getCurrentPosition((pos) => {
-            fetch(`${webAppUrl}?id_user=${encodeURIComponent(decodedText)}&tipe=${currentMode}&lat=${pos.coords.latitude}&long=${pos.coords.longitude}`)
-            .then(() => {
-                msg.innerText = `Terverifikasi: ${decodedText}`;
-                updateLog(decodedText, currentMode);
-                setTimeout(() => { box.style.display = "none"; isProcessing = false; }, 3000);
-            });
-        }, () => {
-            alert("Aktifkan GPS!");
+        isProcessing = true;
+        const status = document.getElementById('status');
+        status.style.display = "block";
+        status.style.background = "rgba(99, 102, 241, 0.1)";
+        status.style.color = "#818cf8";
+        status.innerText = "Broadcasting to Node...";
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => kirimData(decodedText, currentMode, pos.coords.latitude, pos.coords.longitude),
+                () => {
+                    alert("GPS Wajib Aktif!");
+                    isProcessing = false;
+                    status.style.display = "none";
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+    }
+
+    function kirimData(id, tipe, lat, long) {
+        const status = document.getElementById('status');
+        const finalUrl = `${webAppUrl}?id_user=${encodeURIComponent(id)}&tipe=${encodeURIComponent(tipe)}&lat=${lat}&long=${long}`;
+
+        fetch(finalUrl, { method: 'GET' })
+        .then(() => {
+            status.style.background = "rgba(34, 197, 94, 0.1)";
+            status.style.color = "#4ade80";
+            status.innerText = `Verified: ${id}`;
+            updateLog(id, currentMode);
+            setTimeout(() => { status.style.display = "none"; isProcessing = false; }, 3000);
+        })
+        .catch(() => {
+            status.innerText = "Network Error!";
             isProcessing = false;
         });
     }
 
     function updateLog(id, mode) {
         const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const item = `
-            <div class="log-item">
+        const color = mode === 'MASUK' ? '#4ade80' : '#f87171';
+        const log = `
+            <div class="log-card">
                 <div>
-                    <div style="font-weight:700; font-size:12px; color: #f1f5f9;">${id}</div>
-                    <div style="font-size:9px; color:#64748b; margin-top: 2px;">${now}</div>
+                    <div style="font-weight:800; font-size:14px; color:#f1f5f9">${id}</div>
+                    <div style="font-size:10px; color:#64748b; letter-spacing:1px">${now}</div>
                 </div>
-                <div style="font-weight:800; font-size:11px; color: ${mode === 'MASUK' ? '#34d399' : '#f87171'}">${mode}</div>
+                <div style="font-weight:800; font-size:12px; color:${color}">${mode}</div>
             </div>`;
-        document.getElementById('logList').innerHTML = item + document.getElementById('logList').innerHTML;
+        document.getElementById('logList').innerHTML = log + document.getElementById('logList').innerHTML;
     }
 
-    const scanner = new Html5QrcodeScanner("reader", { fps: 20, qrbox: 250 });
-    scanner.render(onScanSuccess);
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+        fps: 25, qrbox: {width: 220, height: 220}, aspectRatio: 1.0 
+    });
+    html5QrcodeScanner.render(onScanSuccess);
 </script>
 </body>
 </html>
