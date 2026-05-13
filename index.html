@@ -117,7 +117,8 @@
 </div>
 
 <script>
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbwOlx_-FYHecXHXrCE-87DzTQQgLu9PqVOlqdgB-1baXOu9dxzA4ql95WQ0CXB_PLhl/exec"; // GANTI DENGAN URL EXEC ANDA
+    // GANTI DENGAN URL EXEC ANDA
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbwKUWnQwNLj6HECSfkw-QmPNsr_TU1BISiM8CBkgGW604vkXlPGkGnlYgQ7vCIOSXJU/exec"; 
     let currentMode = "";
     let isProcessing = false;
 
@@ -142,19 +143,44 @@
         status.style.display = "block";
         status.style.background = "#e0f2fe";
         status.style.color = "#0369a1";
-        status.innerText = "Mengirim data...";
+        status.innerText = "Mendapatkan lokasi...";
 
-        fetch(webAppUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({ id_user: decodedText, tipe: currentMode })
-        })
-        .then(() => {
+        // Step 1: Ambil Lokasi GPS
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const long = position.coords.longitude;
+                    kirimData(decodedText, currentMode, lat, long);
+                },
+                (error) => {
+                    isProcessing = false;
+                    status.style.background = "#fee2e2";
+                    status.style.color = "#991b1b";
+                    status.innerText = "Gagal: Izin Lokasi Ditolak!";
+                },
+                { enableHighAccuracy: true }
+            );
+        } else {
+            isProcessing = false;
+            alert("Browser tidak mendukung GPS.");
+        }
+    }
+
+    function kirimData(id, tipe, lat, long) {
+        const status = document.getElementById('status');
+        status.innerText = "Mengirim data presensi...";
+
+        // Menggunakan URLSearchParams agar bisa diterima oleh doGet/doPost Google Script dengan mudah
+        const finalUrl = `${webAppUrl}?id_user=${encodeURIComponent(id)}&tipe=${encodeURIComponent(tipe)}&lat=${lat}&long=${long}`;
+
+        fetch(finalUrl, { method: 'GET' }) // Menggunakan GET untuk menghindari masalah CORS di Apps Script
+        .then(response => {
             status.style.background = currentMode === 'MASUK' ? "#dcfce7" : "#fee2e2";
             status.style.color = currentMode === 'MASUK' ? "#166534" : "#991b1b";
-            status.innerText = `Berhasil ${currentMode}: ${decodedText}`;
+            status.innerText = `Berhasil ${currentMode}: ${id}`;
             
-            updateLog(decodedText, currentMode);
+            updateLog(id, currentMode);
             
             setTimeout(() => { 
                 status.style.display = "none";
@@ -163,7 +189,7 @@
         })
         .catch(() => {
             status.style.background = "#fef2f2";
-            status.innerText = "Koneksi Gagal!";
+            status.innerText = "Koneksi ke Server Gagal!";
             isProcessing = false;
         });
     }
