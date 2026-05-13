@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Absensi QR</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        #reader { width: 100%; max-width: 500px; margin: auto; border: 10px solid #eee; border-radius: 10px; }
+        .status { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h2>Scan QR Code Absensi</h2>
+    <div id="reader"></div>
+    <div id="statusMsg" class="status"></div>
+
+    <script>
+        // GANTI DENGAN URL DI FOTO ANDA
+        const webAppUrl = "https://script.google.com/macros/s/AKfycbwzfFIoyldPeAShH53UVMI8NtEKLgI120y7jAi9ceaxvBVanqOT2V_H08VsGsHOwIsy/exec"; 
+
+        function onScanSuccess(decodedText) {
+            const statusDiv = document.getElementById('statusMsg');
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status';
+            statusDiv.innerText = "Mengirim data: " + decodedText + "...";
+
+            // Mengirim data ke Google Sheets via POST
+            fetch(webAppUrl, {
+                method: 'POST',
+                mode: 'no-cors', // Penting agar tidak terblokir CORS browser
+                body: JSON.stringify({
+                    id_user: decodedText,
+                    id_device: navigator.userAgent
+                })
+            })
+            .then(() => {
+                statusDiv.className = 'status success';
+                statusDiv.innerText = "BERHASIL! Absensi tercatat untuk ID: " + decodedText;
+                // Restart scanner setelah 3 detik
+                setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+            })
+            .catch(err => {
+                statusDiv.className = 'status error';
+                statusDiv.innerText = "GAGAL: " + err;
+            });
+        }
+
+        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+</body>
+</html> 
