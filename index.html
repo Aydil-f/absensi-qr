@@ -3,86 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi SDN KAMBES 3</title>
+    <title>Absensi QR - SDN KAMBES 3</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #008080; --masuk: #2ecc71; --pulang: #e74c3c; --bg: #f8f9fa; }
+        :root {
+            --bg-body: #f1f5f9;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --primary-dark: #0f172a;
+            --accent-blue: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #1e293b;
+        }
+
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg); margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        .header { background: linear-gradient(135deg, var(--primary), #005a5a); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .header h2 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
+        body { 
+            background: var(--bg-body); 
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                              radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%);
+            margin: 0; min-height: 100vh; color: var(--text-main);
+        }
 
-        .container { padding: 20px; flex: 1; max-width: 500px; margin: -40px auto 0 auto; width: 100%; }
+        .header { 
+            padding: 40px 20px 80px 20px; 
+            text-align: center; color: white;
+        }
+        .header h2 { margin: 0; font-weight: 700; letter-spacing: -1px; font-size: 1.8rem; }
+        .header p { opacity: 0.7; font-size: 0.9rem; margin-top: 5px; }
+
+        .container { 
+            padding: 0 20px 40px 20px; 
+            max-width: 480px; margin: -50px auto 0 auto; 
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .mode-container {
+            display: flex; gap: 12px; margin-bottom: 24px;
+            background: rgba(0,0,0,0.05); padding: 6px; border-radius: 16px;
+        }
+
+        .mode-btn {
+            flex: 1; padding: 14px; border: none; border-radius: 12px;
+            font-weight: 600; cursor: pointer; transition: 0.3s all;
+            background: transparent; color: #64748b; font-size: 13px;
+        }
+
+        .mode-btn.active-m { background: white; color: var(--success); box-shadow: 0 4px 12px rgba(16,185,129,0.2); }
+        .mode-btn.active-p { background: white; color: var(--danger); box-shadow: 0 4px 12px rgba(239,68,68,0.2); }
+
+        #reader { 
+            width: 100%; border-radius: 18px; overflow: hidden; 
+            border: none !important; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .status-toast {
+            display: none; padding: 16px; border-radius: 16px; 
+            margin-top: 16px; font-weight: 600; font-size: 14px;
+            text-align: center; transition: 0.3s;
+        }
+
+        .history-section { margin-top: 30px; }
+        .history-title { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; display: block; }
+
+        .log-card {
+            background: white; padding: 16px; border-radius: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border-left: 4px solid var(--accent-blue);
+        }
         
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }
-        
-        .mode-selector { display: flex; gap: 15px; margin-bottom: 25px; }
-        .mode-btn { flex: 1; padding: 18px; border: none; border-radius: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #fff; background: #bdc3c7; text-transform: uppercase; }
-        
-        .btn-masuk.active { background: var(--masuk); transform: translateY(-3px); box-shadow: 0 8px 15px rgba(46, 204, 113, 0.3); }
-        .btn-pulang.active { background: var(--pulang); transform: translateY(-3px); box-shadow: 0 8px 15px rgba(231, 76, 60, 0.3); }
-
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; border: none !important; }
-        #reader__dashboard_section_csr button { background: var(--primary); color: white; border-radius: 8px; padding: 10px; border: none; margin-top: 10px; }
-
-        .status-pill { display: none; padding: 15px; border-radius: 12px; margin-top: 15px; font-weight: 600; font-size: 14px; animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .history-label { font-weight: 700; color: #7f8c8d; margin-bottom: 10px; display: block; font-size: 12px; text-transform: uppercase; }
-        .log-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border-left: 5px solid var(--primary); }
+        /* Menghilangkan instruksi standar html5-qrcode yang mengganggu */
+        #reader__dashboard_section_csr button {
+            background: var(--accent-blue) !important;
+            color: white !important; border: none !important;
+            padding: 10px 20px !important; border-radius: 10px !important;
+        }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2>ABSENSI QR SDN KAMBES 3</h2>
+    <h2>SDN KAMBES 3</h2>
+    <p>Presensi Digital Dengan QR</p>
 </div>
 
 <div class="container">
-    <div class="card">
-        <span class="history-label text-center">Pilih Status Presensi</span>
-        <div class="mode-selector">
-            <button id="btnM" class="mode-btn btn-masuk" onclick="setMode('MASUK')">MASUK</button>
-            <button id="btnP" class="mode-btn btn-pulang" onclick="setMode('PULANG')">PULANG</button>
+    <div class="glass-card">
+        <div class="mode-container">
+            <button id="mBtn" class="mode-btn" onclick="setMode('MASUK')">MASUK</button>
+            <button id="pBtn" class="mode-btn" onclick="setMode('PULANG')">PULANG</button>
         </div>
         
         <div id="reader"></div>
-        <div id="status" class="status-pill"></div>
+        <div id="status" class="status-toast"></div>
     </div>
 
-    <span class="history-label">Riwayat Terakhir</span>
-    <div id="logList"></div>
+    <div class="history-section">
+        <span class="history-title">Aktivitas Terbaru</span>
+        <div id="logList"></div>
+    </div>
 </div>
 
 <script>
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbz0n0DAbO0QywXKT7i9ZYfshVLz9nm086LqHSaM0ZlhZrTBZd1MNimSGCGVGkJctUiY/exec"; // GANTI DENGAN URL EXEC ANDA
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbxwph2sr73lF7xHciGgR-_PxKNYx1LoTedpBkQ5THZkG0Ciy5lWg9auUuytlOrNKWCy/exec"; // GANTI DENGAN URL EXEC ANDA
     let currentMode = "";
-    let isLocked = false;
+    let isProcessing = false;
 
     function setMode(mode) {
         currentMode = mode;
-        document.getElementById('btnM').classList.remove('active');
-        document.getElementById('btnP').classList.remove('active');
+        document.getElementById('mBtn').className = 'mode-btn';
+        document.getElementById('pBtn').className = 'mode-btn';
         
-        if(mode === 'MASUK') document.getElementById('btnM').classList.add('active');
-        else document.getElementById('btnP').classList.add('active');
+        if(mode === 'MASUK') document.getElementById('mBtn').classList.add('active-m');
+        else document.getElementById('pBtn').classList.add('active-p');
     }
 
     function onScanSuccess(decodedText) {
-        if (isLocked) return;
+        if (isProcessing) return;
         if (!currentMode) {
-            alert("Harap pilih mode MASUK atau PULANG!");
+            alert("Silakan pilih mode MASUK atau PULANG terlebih dahulu.");
             return;
         }
 
-        isLocked = true;
-        const statusDiv = document.getElementById('status');
-        statusDiv.style.display = "block";
-        statusDiv.style.background = "#ebf5fb";
-        statusDiv.style.color = "#2980b9";
-        statusDiv.innerHTML = "⌛ Mengirim Data...";
+        isProcessing = true;
+        const status = document.getElementById('status');
+        status.style.display = "block";
+        status.style.background = "#e0f2fe";
+        status.style.color = "#0369a1";
+        status.innerText = "Mengirim data...";
 
         fetch(webAppUrl, {
             method: 'POST',
@@ -90,42 +150,42 @@
             body: JSON.stringify({ id_user: decodedText, tipe: currentMode })
         })
         .then(() => {
-            statusDiv.style.background = currentMode === 'MASUK' ? "#d4edda" : "#f8d7da";
-            statusDiv.style.color = currentMode === 'MASUK' ? "#155724" : "#721c24";
-            statusDiv.innerHTML = `✅ Berhasil ${currentMode}: ${decodedText}`;
+            status.style.background = currentMode === 'MASUK' ? "#dcfce7" : "#fee2e2";
+            status.style.color = currentMode === 'MASUK' ? "#166534" : "#991b1b";
+            status.innerText = `Berhasil ${currentMode}: ${decodedText}`;
             
-            addLog(decodedText, currentMode);
+            updateLog(decodedText, currentMode);
             
             setTimeout(() => { 
-                statusDiv.style.display = "none";
-                isLocked = false; 
+                status.style.display = "none";
+                isProcessing = false; 
             }, 3000);
         })
         .catch(() => {
-            statusDiv.style.background = "#f2dede";
-            statusDiv.innerText = "❌ Gagal Terhubung Server";
-            isLocked = false;
+            status.style.background = "#fef2f2";
+            status.innerText = "Koneksi Gagal!";
+            isProcessing = false;
         });
     }
 
-    function addLog(id, mode) {
-        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const logHtml = `
-            <div class="log-item" style="border-left-color: ${mode === 'MASUK' ? '#2ecc71' : '#e74c3c'}">
+    function updateLog(id, mode) {
+        const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const color = mode === 'MASUK' ? '#10b981' : '#ef4444';
+        const log = `
+            <div class="log-card" style="border-left-color: ${color}">
                 <div>
-                    <div style="font-weight:700">${id}</div>
-                    <div style="font-size:11px; color:#95a5a6">${time}</div>
+                    <div style="font-weight:700; font-size:15px;">${id}</div>
+                    <div style="font-size:12px; color:#94a3b8">${now}</div>
                 </div>
-                <div style="font-weight:700; color:${mode === 'MASUK' ? '#2ecc71' : '#e74c3c'}">${mode}</div>
+                <div style="font-weight:700; color:${color}">${mode}</div>
             </div>`;
-        document.getElementById('logList').innerHTML = logHtml + document.getElementById('logList').innerHTML;
+        document.getElementById('logList').innerHTML = log + document.getElementById('logList').innerHTML;
     }
 
-    // Auto Start Scanner
     const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-        fps: 15, 
+        fps: 20, 
         qrbox: {width: 250, height: 250},
-        rememberLastUsedCamera: true
+        aspectRatio: 1.0
     });
     html5QrcodeScanner.render(onScanSuccess);
 </script>
