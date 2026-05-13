@@ -3,54 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner Absensi QR</title>
+    <title>Digital Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        #reader { width: 100%; max-width: 500px; margin: auto; border: 10px solid #eee; border-radius: 10px; }
-        .status { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
+        body { background-color: #f4f7f6; }
+        .sidebar { height: 100vh; background: #008080; color: white; padding-top: 20px; position: fixed; }
+        .sidebar a { color: #b2dfdb; text-decoration: none; padding: 10px 20px; display: block; }
+        .sidebar a:hover, .sidebar a.active { background: #006666; color: white; border-radius: 5px; }
+        .main-content { margin-left: 240px; padding: 20px; }
+        .card-scanner { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #reader { border-radius: 10px; overflow: hidden; border: none !important; }
+        .table-custom { background: white; border-radius: 10px; overflow: hidden; }
     </style>
 </head>
 <body>
-    <h2>Scan QR Code Absensi</h2>
-    <div id="reader"></div>
-    <div id="statusMsg" class="status"></div>
 
-    <script>
-        // GANTI DENGAN URL DI FOTO ANDA
-        const webAppUrl = "https://script.google.com/macros/s/AKfycbwzfFIoyldPeAShH53UVMI8NtEKLgI120y7jAi9ceaxvBVanqOT2V_H08VsGsHOwIsy/exec"; 
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar d-none d-md-block">
+            <div class="text-center mb-4">
+                <i class="fas fa-qrcode fa-3x mb-2"></i>
+                <h6 class="fw-bold">ATTENDANCE SYSTEM</h6>
+            </div>
+            <a href="#"><i class="fas fa-home me-2"></i> Dashboard</a>
+            <a href="#" class="active"><i class="fas fa-camera me-2"></i> Scan QR</a>
+            <a href="#"><i class="fas fa-users me-2"></i> Users</a>
+            <a href="#"><i class="fas fa-file-alt me-2"></i> Reports</a>
+        </div>
 
-        function onScanSuccess(decodedText) {
-            const statusDiv = document.getElementById('statusMsg');
-            statusDiv.style.display = 'block';
-            statusDiv.className = 'status';
-            statusDiv.innerText = "Mengirim data: " + decodedText + "...";
+        <div class="col-md-10 main-content offset-md-2">
+            <nav class="navbar navbar-light bg-white shadow-sm mb-4 rounded">
+                <div class="container-fluid">
+                    <span class="navbar-brand mb-0 h1 text-teal">DIGITAL ATTENDANCE SYSTEM</span>
+                </div>
+            </nav>
 
-            // Mengirim data ke Google Sheets via POST
-            fetch(webAppUrl, {
-                method: 'POST',
-                mode: 'no-cors', // Penting agar tidak terblokir CORS browser
-                body: JSON.stringify({
-                    id_user: decodedText,
-                    id_device: navigator.userAgent
-                })
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card card-scanner mb-4">
+                        <div class="card-body p-4 text-center">
+                            <div id="reader"></div>
+                            <div id="statusMsg" class="alert mt-3" style="display:none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="table-custom shadow-sm">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User ID</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // GANTI URL INI DENGAN PUNYA ANDA
+    const webAppUrl = "MASUKKAN_URL_WEB_APP_ANDA_DISINI";
+
+    function onScanSuccess(decodedText) {
+        const statusDiv = document.getElementById('statusMsg');
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'alert alert-info';
+        statusDiv.innerText = "Processing: " + decodedText;
+
+        fetch(webAppUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({
+                id_user: decodedText,
+                id_device: navigator.userAgent
             })
-            .then(() => {
-                statusDiv.className = 'status success';
-                statusDiv.innerText = "BERHASIL! Absensi tercatat untuk ID: " + decodedText;
-                // Restart scanner setelah 3 detik
-                setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
-            })
-            .catch(err => {
-                statusDiv.className = 'status error';
-                statusDiv.innerText = "GAGAL: " + err;
-            });
-        }
+        })
+        .then(() => {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerText = "SUCCESS! " + decodedText + " recorded.";
+            
+            // Tambahkan baris ke tabel riwayat (Simulasi lokal)
+            const row = `<tr>
+                <td>${new Date().toLocaleTimeString()}</td>
+                <td>${decodedText}</td>
+                <td><span class="badge bg-success">Success</span></td>
+            </tr>`;
+            document.getElementById('historyBody').innerHTML = row + document.getElementById('historyBody').innerHTML;
+        })
+        .catch(err => {
+            statusDiv.className = 'alert alert-danger';
+            statusDiv.innerText = "FAILED: " + err;
+        });
+    }
 
-        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        html5QrcodeScanner.render(onScanSuccess);
-    </script>
+    var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+</script>
+
 </body>
-</html> 
+</html>
